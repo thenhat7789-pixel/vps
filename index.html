@@ -1136,7 +1136,8 @@
 
   <script>
     (function () {
-      var AGENT_URL = localStorage.getItem('vps_agent_url') || 'http://localhost:3000';
+      var defaultUrl = (window.location.protocol === 'http:' || window.location.protocol === 'https:') && !window.location.hostname.includes('onrender.com') ? window.location.origin : 'http://localhost:3000';
+      var AGENT_URL = localStorage.getItem('vps_agent_url') || defaultUrl;
       var isAutoRunning = true;
       var activeSkills = ['1', '2'];
       var skillSpeedMs = 600;
