@@ -481,6 +481,29 @@ const server = http.createServer((req, res) => {
     if (served) return;
   }
 
+  // Endpoint tải game trọn gói (.exe / zip / file)
+  if (pathname === '/download/game' || pathname === '/download/hso' || pathname === '/HSO_v403B.exe' || pathname.startsWith('/download/')) {
+    let targetFileName = 'HSO_v403B.exe';
+    if (pathname.startsWith('/download/') && pathname !== '/download/game' && pathname !== '/download/hso') {
+      targetFileName = path.basename(pathname.replace('/download/', ''));
+    }
+    const filePath = path.join(__dirname, targetFileName);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const stat = fs.statSync(filePath);
+      res.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(targetFileName)}"`,
+        'Content-Length': stat.size
+      });
+      fs.createReadStream(filePath).pipe(res);
+      return;
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Không tìm thấy file game để tải về! Hãy đảm bảo file nằm trong thư mục Agent.');
+      return;
+    }
+  }
+
   // API Router
   function jsonResponse(data, status = 200) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });

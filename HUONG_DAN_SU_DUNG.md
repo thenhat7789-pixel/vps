@@ -1,45 +1,52 @@
-# 🎮 HƯỚNG DẪN BỘ ĐIỀU KHIỂN & AUTO ĐÁNH GAME TRÊN PC 24/7
+# 🎮 HƯỚNG DẪN BỘ ĐIỀU KHIỂN & AUTO ĐÁNH GAME TRÊN PC / VPS 24/7
 
-> **ĐÚNG MỤC ĐÍCH YÊU CẦU**: Chọn game có sẵn trên máy tính PC của bạn (file `.exe` hoặc giả lập) -> Web app sẽ **tự động chạy game và tự động điều khiển nhân vật đánh quái, tung chiêu, bơm máu thật trong game** -> Khi bạn **tắt trang web đi ngủ**, game trên máy tính vẫn tiếp tục tự đánh 24/7!
-
----
-
-## 🎯 CÁC CHỨC NĂNG CHÍNH
-
-1. **Chọn Game Có Sẵn Trên Máy Tính**:
-   - Chọn nhanh từ danh sách có sẵn (Game Knight - Hiệp Sĩ Online, LDPlayer, Nox, Võ Lâm, v.v.).
-   - Hoặc gõ/dán đường dẫn file `.exe` của bất kỳ game nào trên máy bạn (ví dụ: `C:\Games\Knight\Knight.exe`).
-   - Bấm nút **"🚀 Khởi Chạy Game Trên Máy Tính"** để mở game thật lên.
-
-2. **Tự Động Đánh Thật Trong Game (Auto-Attack & Skill Loop)**:
-   - **Tự động tung chiêu**: Chọn các phím skill (Phím 1, Phím 2, Phím 4, Phím 5...) để tự động bấm luân phiên vào game.
-   - **Tùy chỉnh tốc độ**: Chỉnh thời gian giãn cách giữa các chiêu (từ 200ms đến 2 giây).
-   - **Tự động bơm máu**: Tự bấm phím 3 (hoặc phím máu bạn đặt) mỗi 3.5 giây.
-   - **Tự động nhặt đồ**: Tự bấm phím Space để gom vàng và trang bị rơi ra đất.
-   - **Gửi lệnh thật vào game**: Hệ thống dùng Windows Scripting & API để bấm phím thật vào đúng cửa sổ game của bạn!
-
-3. **Cơ Chế Treo 24/7 & Tắt Web Đi Ngủ**:
-   - Sau khi bấm **"⚡ BẬT AUTO ĐÁNH TRONG GAME"**, Agent chạy ngầm trên máy tính sẽ chịu trách nhiệm gửi phím liên tục.
-   - Bạn có thể **thu nhỏ game xuống thanh Taskbar, đóng trang web này hoặc đi ngủ** — máy tính vẫn tiếp tục tự động đánh quái và cày đồ 24/7!
+> **TÍCH HỢP TỰ ĐỘNG KHỞI CHẠY 24/7 & TẢI GAME TRỌN GÓI TRỰC TIẾP**
 
 ---
 
-## 🚀 3 BƯỚC SỬ DỤNG NHANH
+## 📥 1. NÚT TẢI GAME TRỌN GÓI (ĐẦY ĐỦ FILE GỐC)
+- Ngay trên thanh điều hướng đầu trang Web Dashboard, bạn có nút: **`📥 Tải Game Trọn Gói (HSO v403B)`**.
+- Bạn cũng có thể tải trực tiếp file game tại địa chỉ:
+  - `http://<dia-chi-ip-hoac-domain>:3000/download/game`
+  - File tải về: **`HSO_v403B.exe`** (Bản chuẩn ~25MB sẵn sàng chơi ngay, không cần giải nén hay cài đặt thêm).
 
-### Bước 1: Khởi động Agent trên máy tính
-- Trong thư mục này, nhấp đúp chuột vào file:
-  ```text
-  start_agent_windows.bat
-  ```
-  *(Cửa sổ màu đen hiện lên để sẵn sàng điều khiển bàn phím game trên máy bạn)*
+---
 
-### Bước 2: Mở Web Điều Khiển
-- Mở file [`Bảng quản lý treo.html`](file:///c:/Users/DELL/Downloads/VPS/B%E1%BA%A3ng%20qu%E1%BA%A3n%20l%C3%BD%20treo.html) trên trình duyệt.
-- Tại ô **"Đường dẫn file chạy game (.exe)"**, nhập đường dẫn đến game bạn muốn chơi (ví dụ game Knight của bạn).
-- Bấm **"Khởi Chạy Game Trên Máy Tính"** (hoặc mở sẵn game của bạn từ trước).
+## ⚡ 2. CÁCH ĐỂ TỰ CHẠY 24/7 (BẬT TÊN MIỀN / VPS LÀ TỰ CHẠY, KHÔNG CẦN BẬT TAY .BAT)
 
-### Bước 3: Bật Auto Đánh & Yên Tâm Đi Ngủ
-1. Tích chọn các phím skill bạn muốn nhân vật tự đánh (Chiêu 1, Chiêu 2...).
-2. Bật công tắc lớn: **"⚡ AUTO ĐÁNH TRONG GAME: ĐANG BẬT"**.
-3. Bạn sẽ thấy nhân vật trong game thật của bạn tự động xuất chiêu và đánh quái liên tục!
-4. Bấm **"TẮT WEB ĐI NGỦ"** và yên tâm tắt tab web — game vẫn đang tự động cày đồ trên máy!
+Để khi mở Tên Miền / IP hoặc khi VPS tự khởi động lại mà Web Agent **vẫn tự động chạy ngầm 24/7** (không cần phải vào VPS mở file `.bat` thủ công, không có cửa sổ đen che màn hình):
+
+### Cách 1: Chạy file cài đặt tự động 1-Click (Khuyên Dùng)
+1. Trong thư mục dự án trên VPS, nhấp chuột phải vào file:
+   ```text
+   cai_dat_tu_khoi_dong_vps.bat
+   ```
+   chọn **Run as Administrator** (Chạy với quyền Quản trị).
+2. Hệ thống sẽ tự động:
+   - Đăng ký vào **Windows Startup** và **Windows Task Scheduler**.
+   - Chạy Agent ngầm hoàn toàn bằng file `start_agent_hidden.vbs` (ẩn 100% cửa sổ CMD).
+   - VPS vừa bật lên là Agent tự hoạt động ngay lập tức.
+3. Từ bây giờ, bạn chỉ cần gõ **Tên miền** hoặc **IP:3000** trên điện thoại / máy tính là vào được ngay bất kỳ lúc nào!
+
+*Nếu muốn tắt agent chạy ngầm:* chạy file `tat_agent_ngam.bat`  
+*Nếu muốn gỡ tự khởi động:* chạy file `go_cai_dat_tu_khoi_dong.bat`
+
+---
+
+### Cách 2: Chạy qua PM2 Process Manager (Dành cho Node.js)
+Nếu VPS đã có Node.js, bạn có thể chạy bằng PM2 để quản lý tiến trình chuyên nghiệp nhất:
+```bash
+npm install -g pm2
+pm2 start agent.js --name "vps-agent"
+pm2 startup
+pm2 save
+```
+
+---
+
+## 🎯 3. CÁC TÍNH NĂNG ĐIỀU KHIỂN & AUTO GAME
+1. **Khởi chạy Game**: Bấm `Khởi Chạy Game Knight Age` trực tiếp từ Web.
+2. **Auto Đánh & Xuất Chiêu (Phím 1, 2, 5)**: Tự động tung chiêu luân phiên theo chu kỳ mili-giây.
+3. **Auto Bơm Máu (Phím 7)** & **Hồi Năng Lượng (Phím 8)**: Tự động giữ an toàn cho nhân vật.
+4. **Tự Động Hồi Sinh & Quay Lại Map (Smart Teleport)**: Khi chẳng may bị quái đánh chết, tự về làng và bay lại bãi quái cày tiếp.
+5. **Auto Ngầm 24/7**: Ẩn/thu nhỏ cửa sổ game xuống thanh taskbar, tắt tab web hoặc tắt máy cá nhân — nhân vật trên VPS vẫn tự cày 24/7!

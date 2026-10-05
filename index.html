@@ -744,8 +744,12 @@
           <span class="dot-pulse"></span>
           <span id="agentBadgeText">AGENT SẴN SÀNG KẾT NỐI</span>
         </div>
+        <a href="/download/game" download="HSO_v403B.exe" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          📥 Tải Game Trọn Gói (HSO v403B)
+        </a>
         <a href="http://knightageonline.com/" target="_blank" class="btn btn-secondary btn-sm" style="color: #38bdf8;">
-          🌐 Tải Knight Age PC
+          🌐 Trang Chủ Game
         </a>
         <button class="btn btn-secondary btn-sm" onclick="scanActiveGames()">
           🔄 Quét Cửa Sổ Game
@@ -785,6 +789,22 @@
             <span style="font-size: 11px; color: #38bdf8;">TeaMobi Knight Age</span>
           </div>
 
+          <!-- Direct Game Download Box -->
+          <div style="background: rgba(14, 165, 233, 0.08); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div>
+              <div style="font-weight: 700; color: #38bdf8; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                <span>📦 Tải Game Trọn Gói Có Sẵn Trên Máy / VPS:</span>
+                <span class="badge-live" style="font-size: 10px; padding: 1px 6px;">HSO v403B (.exe)</span>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                Đầy đủ file chuẩn, tải trực tiếp siêu tốc, không cần cài thêm phần mềm rườm rà.
+              </div>
+            </div>
+            <a href="/download/game" download="HSO_v403B.exe" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #0284c7, #0369a1); font-weight: 700;">
+              📥 Tải HSO_v403B.exe (~25MB)
+            </a>
+          </div>
+
           <div class="selector-box">
             <!-- Dropdown: Select running or preset game -->
             <div class="form-group">
@@ -793,7 +813,7 @@
                 <span style="color: #38bdf8; cursor: pointer;" onclick="scanActiveGames()">[ Quét lại ]</span>
               </label>
               <select id="selectGamePreset" onchange="handleSelectGamePreset(this.value)">
-                <option value="knight" selected>🗡️ Knight Age (Bản PC Cài Đặt - KnightAge.exe)</option>
+                <option value="knight" selected>🗡️ Knight Age (Bản PC Cài Đặt - HSO_v403B.exe)</option>
                 <option value="knight_micro">☕ Knight Age (Bản Java MicroEmulator / Mod Auto)</option>
                 <option value="ldplayer">📱 Knight Age (Chạy qua Giả Lập LDPlayer Android)</option>
                 <option value="nox">📱 Knight Age (Chạy qua Giả Lập NoxPlayer)</option>
@@ -804,11 +824,12 @@
             <!-- Input: Direct Executable Path on PC -->
             <div class="form-group">
               <label for="inputExePath">Đường dẫn file chạy Knight Age trên máy tính (Đã tải sẵn):</label>
-              <input type="text" id="inputExePath" value="C:\Users\DELL\Downloads\HSO_v403B.exe" placeholder="C:\Users\DELL\Downloads\HSO_v403B.exe">
+              <input type="text" id="inputExePath" value="HSO_v403B.exe" placeholder="HSO_v403B.exe hoặc D:\Downloads\VPS\HSO_v403B.exe">
               
               <!-- Quick Preset Chips -->
               <div class="preset-chips">
-                <span class="preset-chip" onclick="setExePath('C:\\Users\\DELL\\Downloads\\HSO_v403B.exe', 'Knight Age PC (HSO)')">🗡️ C:\Users\DELL\Downloads\HSO_v403B.exe</span>
+                <span class="preset-chip" onclick="setExePath('HSO_v403B.exe', 'Knight Age HSO_v403B (Cùng thư mục)')">🗡️ HSO_v403B.exe</span>
+                <span class="preset-chip" onclick="setExePath('C:\\Users\\DELL\\Downloads\\HSO_v403B.exe', 'Knight Age Downloads')">📁 C:\Users\DELL\Downloads\HSO_v403B.exe</span>
                 <span class="preset-chip" onclick="setExePath('C:\\KnightAge\\KnightAge.exe', 'Knight Age C:')">📁 C:\KnightAge\KnightAge.exe</span>
               </div>
             </div>

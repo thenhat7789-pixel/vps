@@ -431,6 +431,34 @@ class RequestHandler(BaseHTTPRequestHandler):
                         self.wfile.write(f.read())
                     return
 
+        # Endpoint tải game trọn gói (.exe / zip)
+        if path in ['/download/game', '/download/hso', '/HSO_v403B.exe'] or path.startswith('/download/'):
+            target_file = 'HSO_v403B.exe'
+            if path.startswith('/download/') and path not in ['/download/game', '/download/hso']:
+                target_file = os.path.basename(path.replace('/download/', ''))
+            fpath = os.path.join(BASE_DIR, target_file)
+            if os.path.exists(fpath) and os.path.isfile(fpath):
+                file_size = os.path.getsize(fpath)
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Content-Disposition', f'attachment; filename="{target_file}"')
+                self.send_header('Content-Length', str(file_size))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                with open(fpath, 'rb') as f:
+                    while True:
+                        chunk = f.read(64 * 1024)
+                        if not chunk:
+                            break
+                        self.wfile.write(chunk)
+                return
+            else:
+                self.send_response(404)
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                self.end_headers()
+                self.wfile.write('Không tìm thấy file game để tải về!'.encode('utf-8'))
+                return
+
         if path == '/api/ping':
             self.send_json({
                 "status": "online",
