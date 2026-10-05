@@ -1144,6 +1144,9 @@
       };
 
 
+      var isGameActiveOnPC = false;
+      var lastStatusLogTime = 0;
+
       function init() {
         // Range slider listener
         document.getElementById('rngSkillSpeed').addEventListener('input', function (e) {
@@ -1157,14 +1160,16 @@
         // Uptime counter
         setInterval(updateUptime, 1000);
 
-        // Simulation auto loop for live console feedback
+        // Simulation auto loop for live console feedback (chỉ chạy khi game thật đang mở)
         setInterval(autoSimulateTick, skillSpeedMs);
 
-        // Check connection to local Agent
-        checkAgentConnection();
+        // Check connection and game state periodically
+        setInterval(checkGameAndAgentStatus, 2000);
+        checkGameAndAgentStatus();
       }
 
       function updateUptime() {
+        if (!isAutoRunning || !isGameActiveOnPC) return;
         var elapsed = Date.now() - startTime;
         var s = Math.floor(elapsed / 1000);
         var d = Math.floor(s / 86400); s %= 86400;
@@ -1187,6 +1192,11 @@
       function autoSimulateTick() {
         if (!isAutoRunning) return;
 
+        // NẾU CHƯA MỞ GAME THÌ TẠM DỪNG, KHÔNG GỬI PHÍM
+        if (!isGameActiveOnPC) {
+          return;
+        }
+
         totalActions++;
         document.getElementById('metricActionsCount').textContent = totalActions.toLocaleString() + ' lần';
 
@@ -1207,22 +1217,75 @@
         }
       }
 
-      // Check agent connection
-      function checkAgentConnection() {
-        fetch(AGENT_URL + '/api/ping')
+      // Check agent connection and real game running status
+      function checkGameAndAgentStatus() {
+        fetch(AGENT_URL + '/api/game/auto/status')
           .then(function (r) { return r.json(); })
-          .then(function () {
+          .then(function (data) {
             document.getElementById('agentBadgeText').textContent = 'AGENT ĐANG KẾT NỐI VỚI MÁY THẬT';
+            var wasActive = isGameActiveOnPC;
+            isGameActiveOnPC = !!data.isGameActive;
+
+            updateGameUIStatus(isGameActiveOnPC, wasActive);
           })
           .catch(function () {
-            document.getElementById('agentBadgeText').textContent = 'CHẾ ĐỘ MÔ PHỎNG / AGENT CHƯA MỞ';
+            // Trường hợp truy cập từ domain bên ngoài mà chưa kết nối local agent
+            fetch(AGENT_URL + '/api/ping')
+              .then(function () {
+                document.getElementById('agentBadgeText').textContent = 'AGENT ĐANG SẴN SÀNG';
+              })
+              .catch(function () {
+                document.getElementById('agentBadgeText').textContent = 'CHẾ ĐỘ MÔ PHỎNG / AGENT CHƯA MỞ';
+              });
           });
+      }
+
+      function updateGameUIStatus(isActive, wasActive) {
+        var pill = document.querySelector('.process-status-pill');
+        var metric = document.getElementById('metricAutoState');
+        var meta = document.getElementById('txtActiveGameMeta');
+
+        if (!isActive) {
+          if (pill) {
+            pill.innerHTML = '<span class="dot-pulse" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span><span style="color: #f59e0b; font-weight: 700;">CHƯA MỞ GAME (ĐANG CHỜ BẠN MỞ)</span>';
+          }
+          if (isAutoRunning) {
+            if (metric) {
+              metric.textContent = 'TẠM DỪNG (CHỜ MỞ GAME)';
+              metric.style.color = '#f59e0b';
+            }
+            if (meta) {
+              meta.textContent = '⚠️ Chưa phát hiện cửa sổ game trên máy • Hãy mở game lên, Auto sẽ tự động cày ngay!';
+            }
+          }
+          if (wasActive && (Date.now() - lastStatusLogTime > 4000)) {
+            appendTerminalLog('⏸ [TẠM DỪNG] Game đã tắt/chưa mở. Auto đang chờ bạn mở lại game...', 'log-alert');
+            lastStatusLogTime = Date.now();
+          }
+        } else {
+          if (pill) {
+            pill.innerHTML = '<span class="dot-pulse" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span><span style="color: #34d399; font-weight: 700;">ĐÃ KẾT NỐI VÀO GAME (ĐANG CHẠY)</span>';
+          }
+          if (isAutoRunning) {
+            if (metric) {
+              metric.textContent = 'ĐANG AUTO CÀY QUÁI 24/7';
+              metric.style.color = '#34d399';
+            }
+            if (meta) {
+              meta.textContent = 'Tiêu đề cửa sổ: "' + selectedGame.name + '" • Trạng thái: Đang gửi lệnh phím trực tiếp';
+            }
+          }
+          if (!wasActive && (Date.now() - lastStatusLogTime > 4000)) {
+            appendTerminalLog('🎮 [ĐÃ MỞ GAME] Phát hiện cửa sổ game đang chạy! Auto tiếp tục cày...', 'log-potion');
+            lastStatusLogTime = Date.now();
+          }
+        }
       }
 
       // Preset selections
       window.handleSelectGamePreset = function (val) {
         if (val === 'knight' || val === 'hso' || val === 'hiepsi') {
-          setExePath('C:\\Users\\DELL\\Downloads\\HSO_v403B.exe', 'HiepSiOnline_400');
+          setExePath('HSO_v403B.exe', 'HiepSiOnline_400');
         } else if (val === 'knight_micro') {
           setExePath('C:\\Games\\Knight\\MicroEmulator.jar', 'HiepSiOnline_400');
         } else if (val === 'ldplayer') {
@@ -1243,7 +1306,7 @@
         document.getElementById('txtActiveGameName').textContent = name + ' (' + path.split('\\').pop() + ')';
         document.getElementById('txtActiveGameMeta').textContent = 'Tiêu đề: "' + name + '" • Đường dẫn: ' + path;
         document.getElementById('modalGameName').textContent = name;
-        showToast('🎯 Đã kết nối vào cửa sổ: ' + name);
+        showToast('🎯 Đã chọn game: ' + name);
         if (isAutoRunning) syncAutoWithAgent();
       };
 
@@ -1291,6 +1354,8 @@
           if (res.success) {
             showToast('🎉 ĐÃ KHỞI CHẠY GAME THẬT TRÊN MÁY TÍNH! (PID: ' + res.pid + ')');
             appendTerminalLog('✅ Game đã mở thành công trên Windows! (PID: ' + res.pid + ')', 'log-potion');
+            isGameActiveOnPC = true;
+            updateGameUIStatus(true, false);
           } else {
             showToast('⚠️ Ghi chú: ' + res.message);
           }
@@ -1325,10 +1390,17 @@
         if (isAutoRunning) {
           lbl.textContent = '⚡ AUTO ĐÁNH TRONG GAME: ĐANG BẬT';
           lbl.style.color = '#34d399';
-          metric.textContent = 'ĐANG AUTO ĐÁNH';
-          metric.style.color = '#34d399';
-          showToast('🟢 ĐÃ BẬT AUTO NGẦM! Không chiếm chuột & bàn phím ngoài.');
-          appendTerminalLog('⚡ KÍCH HOẠT VÒNG LẶP AUTO ĐÁNH QUÁI 24/7', 'log-action');
+          if (isGameActiveOnPC) {
+            metric.textContent = 'ĐANG AUTO ĐÁNH';
+            metric.style.color = '#34d399';
+            showToast('🟢 ĐÃ BẬT AUTO NGẦM! Đang gửi phím vào game.');
+            appendTerminalLog('⚡ KÍCH HOẠT VÒNG LẶP AUTO ĐÁNH QUÁI 24/7', 'log-action');
+          } else {
+            metric.textContent = 'TẠM DỪNG (CHỜ MỞ GAME)';
+            metric.style.color = '#f59e0b';
+            showToast('⏳ Đã bật Auto! Đang chờ bạn mở game để tự động cày.');
+            appendTerminalLog('⏳ AUTO ĐÃ BẬT: Đang chờ bạn mở game...', 'log-alert');
+          }
           syncAutoWithAgent();
         } else {
           lbl.textContent = '⏸ AUTO ĐÁNH: TẠM DỪNG';

@@ -230,7 +230,9 @@ try {
 $hWnd = [Win32BackgroundSender]::FindGameHwnd($targetTitle)
 
 if ($hWnd -ne [IntPtr]::Zero) {
-    if ($action -eq "use_bag_hp") {
+    if ($action -eq "check_game") {
+        Write-Output "GAME_FOUND"
+    } elseif ($action -eq "use_bag_hp") {
         # Tự động mở kho đồ hành trang nốc bình máu
         [Win32BackgroundSender]::UseHpFromBag($hWnd, $slot)
         Write-Output "OK_BAG_HP: Used HP potion from Bag Slot $slot"
@@ -247,5 +249,9 @@ if ($hWnd -ne [IntPtr]::Zero) {
         Write-Output "OK_ISOLATED: Sent $keys"
     }
 } else {
-    Write-Output "WARN: Game window not found for target '$targetTitle'"
+    if ($action -eq "check_game") {
+        Write-Output "GAME_NOT_FOUND"
+    } else {
+        Write-Output "WARN: Game window not found for target '$targetTitle'"
+    }
 }

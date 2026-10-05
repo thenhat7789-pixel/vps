@@ -200,6 +200,7 @@ function stopTask(taskId) {
 // ==========================================
 let gameAutoState = {
   isRunning: false,
+  isGameActive: false,
   targetGame: '',
   targetTitle: '',
   exePath: '',
@@ -219,12 +220,52 @@ let gameAutoState = {
 
 let gameAutoTimer = null;
 let gamePotionTimer = null;
+let gameMonitorTimer = null;
 
 function appendGameLog(msg) {
   const line = `[${new Date().toLocaleTimeString('vi-VN')}] ${msg}`;
   gameAutoState.logBuffer.push(line);
   if (gameAutoState.logBuffer.length > 200) gameAutoState.logBuffer.shift();
   console.log(`[GameAuto] ${msg}`);
+}
+
+// Kiểm tra cửa sổ game có đang thực sự chạy trên máy không
+function checkGameActiveStatus(callback) {
+  if (os.platform() !== 'win32') {
+    gameAutoState.isGameActive = false;
+    if (callback) callback(false);
+    return;
+  }
+
+  const target = gameAutoState.targetTitle || gameAutoState.targetGame || 'HiepSiOnline_400';
+  const scriptPath = path.join(__dirname, 'send_keys.ps1');
+
+  if (fs.existsSync(scriptPath)) {
+    exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -targetTitle "${target}" -action "check_game"`, { timeout: 4000 }, (err, stdout) => {
+      const isFound = stdout && stdout.includes('GAME_FOUND');
+      const wasActive = gameAutoState.isGameActive;
+      gameAutoState.isGameActive = !!isFound;
+
+      if (gameAutoState.isRunning) {
+        if (isFound && !wasActive) {
+          appendGameLog(`🎮 [ĐÃ PHÁT HIỆN GAME MỞ] Đã kết nối vào cửa sổ game! Bắt đầu tự động đánh...`);
+        } else if (!isFound && wasActive) {
+          appendGameLog(`⏸ [TẠM DỪNG] Game đã đóng hoặc chưa mở. Auto đang tạm dừng chờ mở game...`);
+        }
+      }
+
+      if (callback) callback(isFound);
+    });
+  } else {
+    if (callback) callback(false);
+  }
+}
+
+// Bắt đầu vòng lặp kiểm tra trạng thái game định kỳ
+if (!gameMonitorTimer) {
+  gameMonitorTimer = setInterval(() => {
+    checkGameActiveStatus();
+  }, 2500);
 }
 
 // Khởi chạy file game thật trên PC
@@ -247,6 +288,7 @@ function launchRealGame(exePath, name) {
     gameAutoState.exePath = exePath;
     gameAutoState.targetGame = name || path.basename(exePath);
     gameAutoState.pid = child.pid;
+    gameAutoState.isGameActive = true;
     appendGameLog(`🚀 ĐÃ KHỞI CHẠY GAME THẬT: ${exePath} (PID: ${child.pid})`);
 
     return { success: true, pid: child.pid, name: gameAutoState.targetGame };
@@ -285,9 +327,15 @@ function startRealGameAuto(config) {
   if (config.useSmartTarget !== undefined) gameAutoState.useSmartTarget = !!config.useSmartTarget;
   gameAutoState.useHitAndRest = config.useHitAndRest !== undefined ? !!config.useHitAndRest : true;
 
-  appendGameLog(`⚡ BẮT ĐẦU AUTO ĐÁNH NGẦM (BACKGROUND): "${gameAutoState.targetGame || 'Cửa sổ game'}"`);
+  appendGameLog(`⚡ KÍCH HOẠT CHẾ ĐỘ AUTO (Chỉ chạy khi game mở): "${gameAutoState.targetGame || 'Knight Age'}"`);
 
-  // Không chiếm tiêu điểm màn hình để người dùng vẫn dùng bàn phím ngoài bình thường
+  // Kiểm tra ngay lập tức xem game có đang mở không
+  checkGameActiveStatus((isFound) => {
+    if (!isFound) {
+      appendGameLog(`⏳ [CHỜ MỞ GAME] Chưa thấy cửa sổ game. Hãy mở game lên, Auto sẽ tự động cày ngay khi game xuất hiện.`);
+    }
+  });
+
   if (config.forceFocus) {
     focusGameWindow(gameAutoState.targetTitle);
   }
@@ -299,6 +347,11 @@ function startRealGameAuto(config) {
   // Vòng lặp tung chiêu & đánh quái
   gameAutoTimer = setInterval(() => {
     if (!gameAutoState.isRunning) return;
+
+    // CHỈ CHẠY KHI GAME ĐANG MỞ
+    if (!gameAutoState.isGameActive) {
+      return; // Không gửi phím khi chưa mở game
+    }
 
     // Chế độ Tự nghỉ hồi máu tự nhiên (Hit & Rest)
     if (gameAutoState.useHitAndRest) {
@@ -312,7 +365,7 @@ function startRealGameAuto(config) {
 
     actionCounter++;
 
-    // Tự khóa quái gần nhất bằng phím 5 (Đứng yên không chạy lung tung)
+    // Tự khóa quái gần nhất bằng phím 5
     if (gameAutoState.useSmartTarget && actionCounter % 8 === 0) {
       sendKeyToGame('5');
     }
@@ -337,7 +390,7 @@ function startRealGameAuto(config) {
   // Vòng lặp giám sát máu HP: Tự mở kho đồ nốc bình máu đỏ (Ô 3) khi HP < 50%
   if (gameAutoState.usePotion) {
     gamePotionTimer = setInterval(() => {
-      if (!gameAutoState.isRunning) return;
+      if (!gameAutoState.isRunning || !gameAutoState.isGameActive) return;
       checkAndHealHpFromBag(3, 50);
     }, 1500);
   }
@@ -345,7 +398,7 @@ function startRealGameAuto(config) {
   // Vòng lặp bơm mana riêng biệt (Phím 8 trong Knight Age)
   if (config.useMana) {
     setInterval(() => {
-      if (!gameAutoState.isRunning) return;
+      if (!gameAutoState.isRunning || !gameAutoState.isGameActive) return;
       sendKeyToGame('8');
       appendGameLog(`💙 [Auto Mana] Đã tự bơm mana (Phím 8)`);
     }, 4500);
@@ -354,19 +407,17 @@ function startRealGameAuto(config) {
   // Vòng lặp Auto Hồi Sinh Khi Chết & Tự Dùng Vé Dịch Chuyển Về Lại Map Farm (Phím 9)
   if (gameAutoState.useRevive) {
     setInterval(() => {
-      if (!gameAutoState.isRunning) return;
-      // Bấm OK / Enter / Phím 5 hồi sinh về làng
+      if (!gameAutoState.isRunning || !gameAutoState.isGameActive) return;
       sendKeyToGame('ENTER');
       setTimeout(() => {
-        if (!gameAutoState.isRunning) return;
-        // Bấm phím 9 (Vé dịch chuyển) để bay lại map farm
+        if (!gameAutoState.isRunning || !gameAutoState.isGameActive) return;
         sendKeyToGame(gameAutoState.teleportKey || '9');
         appendGameLog(`⚡ [Auto Revive] Đã gửi lệnh hồi sinh & kích hoạt vé bay về bãi quái (Phím ${gameAutoState.teleportKey || '9'})`);
       }, 2200);
     }, 15000);
   }
 
-  return { success: true, message: 'Auto đang chạy ngầm trong game (Không cướp bàn phím ngoài)!' };
+  return { success: true, message: 'Đã kích hoạt Auto (Tự chạy khi mở game, tự dừng khi chưa mở game)!' };
 }
 
 // Dừng vòng lặp auto
@@ -386,7 +437,7 @@ function stopRealGameAuto() {
 
 // Hàm gửi phím thật vào game qua PowerShell Win32 PostMessage (Background)
 function sendKeyToGame(key) {
-  if (os.platform() !== 'win32' || !key) return;
+  if (os.platform() !== 'win32' || !key || !gameAutoState.isGameActive) return;
 
   const target = gameAutoState.targetTitle || gameAutoState.targetGame || 'HiepSiOnline_400';
   const scriptPath = path.join(__dirname, 'send_keys.ps1');
@@ -398,7 +449,7 @@ function sendKeyToGame(key) {
 
 // Hàm kiểm tra máu HP < 50% và tự mở kho đồ nốc bình máu đỏ Ô 3
 function checkAndHealHpFromBag(slot = 3, threshold = 50) {
-  if (os.platform() !== 'win32') return;
+  if (os.platform() !== 'win32' || !gameAutoState.isGameActive) return;
 
   const target = gameAutoState.targetTitle || gameAutoState.targetGame || 'HiepSiOnline_400';
   const scriptPath = path.join(__dirname, 'send_keys.ps1');
