@@ -245,28 +245,21 @@ function checkGameActiveStatus(callback) {
     return;
   }
 
-  const target = gameAutoState.targetTitle || gameAutoState.targetGame || 'HiepSiOnline_400';
-  const scriptPath = path.join(__dirname, 'send_keys.ps1');
+  exec('tasklist /fi "imagename eq hso_v403.exe" /fi "imagename eq HSO*" /fi "imagename eq Knight*"', { timeout: 2500 }, (err, stdout) => {
+    const isFound = stdout && (stdout.toLowerCase().includes('hso_v403') || stdout.toLowerCase().includes('knight') || stdout.toLowerCase().includes('hso'));
+    const wasActive = gameAutoState.isGameActive;
+    gameAutoState.isGameActive = !!isFound;
 
-  if (fs.existsSync(scriptPath)) {
-    exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -targetTitle "${target}" -action "check_game"`, { timeout: 4000 }, (err, stdout) => {
-      const isFound = stdout && stdout.includes('GAME_FOUND');
-      const wasActive = gameAutoState.isGameActive;
-      gameAutoState.isGameActive = !!isFound;
-
-      if (gameAutoState.isRunning) {
-        if (isFound && !wasActive) {
-          appendGameLog(`🎮 [ĐÃ PHÁT HIỆN GAME MỞ] Đã kết nối vào cửa sổ game! Bắt đầu tự động đánh...`);
-        } else if (!isFound && wasActive) {
-          appendGameLog(`⏸ [TẠM DỪNG] Game đã đóng hoặc chưa mở. Auto đang tạm dừng chờ mở game...`);
-        }
+    if (gameAutoState.isRunning) {
+      if (isFound && !wasActive) {
+        appendGameLog(`🎮 [ĐÃ PHÁT HIỆN GAME MỞ] Đã kết nối vào cửa sổ game! Bắt đầu tự động đánh...`);
+      } else if (!isFound && wasActive) {
+        appendGameLog(`⏸ [TẠM DỪNG] Game đã đóng hoặc chưa mở. Auto đang tạm dừng chờ mở game...`);
       }
+    }
 
-      if (callback) callback(isFound);
-    });
-  } else {
-    if (callback) callback(false);
-  }
+    if (callback) callback(isFound);
+  });
 }
 
 // Bắt đầu vòng lặp kiểm tra trạng thái game định kỳ

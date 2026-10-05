@@ -84,15 +84,31 @@ public class Win32BackgroundSender {
         return (uint)c;
     }
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool EnumThreadWindows(int dwThreadId, EnumWindowsProc lpfn, IntPtr lParam);
+
     public static IntPtr FindGameHwnd(string keyword) {
-        // 1. Quét tìm theo Process ID & MainWindowHandle
-        string[] procNames = new string[] { "HSO_v403B", "HSO", "Knight", "KnightAge", "HiepSi", "MicroEmulator", "java", "javaw" };
+        // 1. Quét tìm theo Process ID & MainWindowHandle & Thread Windows
+        string[] procNames = new string[] { "hso_v403", "HSO_v403B", "hso_v403.exe", "HSO", "Knight", "KnightAge", "HiepSi", "HiepSiOnline_400", "MicroEmulator", "java", "javaw", "dnplayer", "Nox" };
         foreach (string pn in procNames) {
             try {
-                Process[] procs = Process.GetProcessesByName(pn);
+                string nameOnly = pn.Replace(".exe", "");
+                Process[] procs = Process.GetProcessesByName(nameOnly);
                 foreach (Process p in procs) {
                     if (p.MainWindowHandle != IntPtr.Zero) {
                         return p.MainWindowHandle;
+                    }
+                    IntPtr threadHwnd = IntPtr.Zero;
+                    foreach (ProcessThread t in p.Threads) {
+                        EnumThreadWindows(t.Id, (hWnd, lParam) => {
+                            if (IsWindowVisible(hWnd)) {
+                                threadHwnd = hWnd;
+                                return false;
+                            }
+                            return true;
+                        }, IntPtr.Zero);
+                        if (threadHwnd != IntPtr.Zero) return threadHwnd;
                     }
                 }
             } catch {}
@@ -228,6 +244,7 @@ try {
 }
 
 $hWnd = [Win32BackgroundSender]::FindGameHwnd($targetTitle)
+$isProc = (Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -match 'hso|knight|hiepsi|microemulator|dnplayer|nox' })
 
 if ($hWnd -ne [IntPtr]::Zero) {
     if ($action -eq "check_game") {
@@ -247,6 +264,19 @@ if ($hWnd -ne [IntPtr]::Zero) {
     } else {
         [Win32BackgroundSender]::SendKeyIsolated($hWnd, $keys)
         Write-Output "OK_ISOLATED: Sent $keys"
+    }
+} elseif ($isProc) {
+    if ($action -eq "check_game") {
+        Write-Output "GAME_FOUND"
+    } else {
+        # Fallback PostMessage hoặc AppActivate
+        try {
+            $wshell = New-Object -ComObject WScript.Shell
+            if ($wshell.AppActivate("HiepSiOnline") -or $wshell.AppActivate("hso_v403")) {
+                $wshell.SendKeys($keys)
+            }
+        } catch {}
+        Write-Output "OK_FALLBACK: Sent $keys"
     }
 } else {
     if ($action -eq "check_game") {
