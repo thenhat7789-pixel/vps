@@ -14,6 +14,14 @@ const fs = require('fs');
 const path = require('path');
 const { spawn, exec } = require('child_process');
 
+// Bắt mọi lỗi ngoại lệ để đảm bảo Agent không bao giờ bị dừng/crash
+process.on('uncaughtException', (err) => {
+  console.error('[Agent Guard] Lỗi ngoại lệ:', err.message);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Agent Guard] Lỗi Promise:', reason);
+});
+
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.API_KEY || 'vps-secret-key-123';
 const DATA_DIR = path.join(__dirname, 'agent_data');
@@ -278,18 +286,36 @@ function launchRealGame(exePath, name) {
       return { success: false, message: 'Tính năng chỉ hỗ trợ trên hệ điều hành Windows.' };
     }
 
-    const child = spawn(exePath, [], {
+    let fullPath = path.isAbsolute(exePath) ? exePath : path.resolve(__dirname, exePath);
+    if (!fs.existsSync(fullPath)) {
+      const alt1 = path.resolve(__dirname, 'game_hso', path.basename(exePath));
+      const alt2 = path.resolve(__dirname, 'game_hso', 'hso_v403.exe');
+      if (fs.existsSync(alt1)) fullPath = alt1;
+      else if (fs.existsSync(alt2)) fullPath = alt2;
+    }
+
+    if (!fs.existsSync(fullPath)) {
+      appendGameLog(`❌ Không tìm thấy file game tại: ${fullPath}`);
+      return { success: false, message: `Không tìm thấy file: ${fullPath}` };
+    }
+
+    const child = spawn(fullPath, [], {
       detached: true,
       stdio: 'ignore',
-      cwd: path.dirname(exePath)
+      cwd: path.dirname(fullPath),
+      shell: fullPath.endsWith('.bat') || fullPath.endsWith('.cmd')
+    });
+
+    child.on('error', (err) => {
+      appendGameLog(`⚠️ Lỗi khi mở game: ${err.message}`);
     });
     child.unref();
 
-    gameAutoState.exePath = exePath;
-    gameAutoState.targetGame = name || path.basename(exePath);
-    gameAutoState.pid = child.pid;
+    gameAutoState.exePath = fullPath;
+    gameAutoState.targetGame = name || path.basename(fullPath);
+    gameAutoState.pid = child.pid || null;
     gameAutoState.isGameActive = true;
-    appendGameLog(`🚀 ĐÃ KHỞI CHẠY GAME THẬT: ${exePath} (PID: ${child.pid})`);
+    appendGameLog(`🚀 ĐÃ KHỞI CHẠY GAME THẬT: ${fullPath} (PID: ${child.pid || 'running'})`);
 
     return { success: true, pid: child.pid, name: gameAutoState.targetGame };
   } catch (err) {

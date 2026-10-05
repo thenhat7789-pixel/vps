@@ -8,6 +8,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 agent_data/logs/
+agent_data/agent.log
 screen_test.jpg
 .DS_Store
 Thumbs.db
+game_hso/
+*.assets
+*.zip
