@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+agent_data/logs/
+screen_test.jpg
+.DS_Store
+Thumbs.db
