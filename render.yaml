@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: vps-aymt
+    env: node
+    plan: free
+    buildCommand: ""
+    startCommand: node agent.js
+    envVars:
+      - key: PORT
+        value: 10000

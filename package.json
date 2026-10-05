@@ -1,0 +1,20 @@
+{
+  "name": "vps-control-center",
+  "version": "1.0.0",
+  "description": "VPS Control Center & Auto Controller 24/7",
+  "main": "agent.js",
+  "scripts": {
+    "start": "node agent.js"
+  },
+  "keywords": [
+    "vps",
+    "game-controller",
+    "agent",
+    "auto-bot"
+  ],
+  "author": "thenhat7789-pixel",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
